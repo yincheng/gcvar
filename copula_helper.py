@@ -53,7 +53,8 @@ def confabulate_logit_data(d=2, N=10, randomseed = 1):
     return (x, y)
 
 def unpack_param_array(params, d, fitcorr = True):
-    sigmatransform = lambda xin: 1000. * sigmoid(0.1 * xin) + 0.0001
+    #sigmatransform = lambda xin: 1000. * sigmoid(0.1 * xin) + 0.0001
+    sigmatransform = lambda xin: np.exp(xin)
     n_corr_var_param = int(d*(d-1)/2)
     if(fitcorr):
         corr_var_param_vec = params[0:n_corr_var_param]

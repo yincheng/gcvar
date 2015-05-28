@@ -11,6 +11,9 @@ import pickle
 
 dataset = 'simulated'
 n_train = 20
+n_true_sample = 10
+sample_file_path = '../posterior_samples/'+'true_post_samples-'+dataset+'-n_train_'+str(n_train)+'-n_samples_'+str(n_true_sample)+'.pickle'
+
 
 with open('../data/'+dataset+'.pickle', 'r') as f:
     (full_x, full_y) = pickle.load(f)
@@ -24,7 +27,12 @@ else:
     test_y = full_y[n_train:]
 
 # Generate some posterior samples to be used later on
-true_post_samples = sample_true_posterior(train_x, train_y, prior_sigma = 5.0, nsamples=1000)
+try:
+    with open(sample_file_path, 'r') as f:
+        (true_post_samples) = pickle.load(f)
+except:
+    true_post_samples = sample_true_posterior(train_x, train_y, prior_sigma = 5.0, nsamples=n_true_sample)
+
 
 for k in (1, 5, 10):
     trained_params = two_step_fitting(n = n_train, k = k, nexperiment = 1, x_arg = train_x, y_arg = train_y)

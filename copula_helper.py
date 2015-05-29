@@ -148,3 +148,20 @@ def compute_predicted_label(x_mat, y_vec, copula_corr_mat, w_marginal_param_list
 
 def compute_zerone_loss_metric(predicted_vec, actual_vec):
     return 100. * np.sum(abs(predicted_vec - actual_vec)/2.)/len(actual_vec)
+
+def sample_mog(param_dict, nsamples = 100000):
+    k_vec = param_dict['k_vec']
+    mu_vec = param_dict['mu_vec']
+    sigma_vec = param_dict['sigma_vec']
+    comp_vec = np.array([])
+    i = 0
+    for mixture in k_vec:
+        comp_vec = np.append(comp_vec, i * np.ones(mixture*nsamples))
+        i += 1
+    if(len(comp_vec)>=nsamples):
+        comp_vec = comp_vec[0:nsamples]
+    else:
+        comp_vec = np.append(comp_vec, (i-1) * np.ones(nsamples - len(comp_vec)))
+    sample_mu = np.array(map(lambda i: mu_vec[int(i)], comp_vec))
+    sample_sigma = np.array(map(lambda i: sigma_vec[int(i)], comp_vec))
+    return sample_sigma * np.random.randn(nsamples) + sample_mu

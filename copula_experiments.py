@@ -88,6 +88,7 @@ def run_experiment(n = 5, d = 2, k = 2, nexperiment = 1, param0_array = 0, csv =
             if(fitcorr):
                 param0_array = np.append(param0_array, np.random.rand(d*(d-1)/2))
             for i in np.arange(0, d):
+                param0_array = np.append(param0_array, np.random.randn(k))
                 param0_array = np.append(param0_array, np.random.randn(k))# * round(np.random.rand(1)*10))
                 param0_array = np.append(param0_array, np.random.randn(k))
         else:

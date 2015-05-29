@@ -55,6 +55,32 @@ def confabulate_logit_data(d=2, N=10, randomseed = 1):
 def unpack_param_array(params, d, fitcorr = True):
     #sigmatransform = lambda xin: 1000. * sigmoid(0.1 * xin) + 0.0001
     sigmatransform = lambda xin: np.exp(xin)
+    ktransform = lambda kin: np.exp(kin)
+    n_corr_var_param = int(d*(d-1)/2)
+    if(fitcorr):
+        corr_var_param_vec = params[0:n_corr_var_param]
+        marginal_param_vec = params[n_corr_var_param:]
+        copula_corr_mat = compute_copula_corr_mat(corr_var_param_vec)
+    else:
+        copula_corr_mat = np.eye(d)
+        marginal_param_vec = params
+
+    k = len(marginal_param_vec)/(3 * d)
+    
+    w_marginal_param_list = list([])
+    for i in np.arange(0, d):
+        j = i * 3 * k
+        param_dict = {'k_vec': ktransform(marginal_param_vec[j:j+k]),
+                      'mu_vec': marginal_param_vec[j+k:j+2*k],
+                      'sigma_vec': np.array(map(sigmatransform, marginal_param_vec[j+2*k:j+3*k]))}
+        param_dict['k_vec'] = param_dict['k_vec'] / np.sum(param_dict['k_vec'])
+        w_marginal_param_list[len(w_marginal_param_list):] = [param_dict]
+    return (copula_corr_mat, w_marginal_param_list)
+
+'''
+def unpack_param_array(params, d, fitcorr = True):
+    #sigmatransform = lambda xin: 1000. * sigmoid(0.1 * xin) + 0.0001
+    sigmatransform = lambda xin: np.exp(xin)
     n_corr_var_param = int(d*(d-1)/2)
     if(fitcorr):
         corr_var_param_vec = params[0:n_corr_var_param]
@@ -74,7 +100,7 @@ def unpack_param_array(params, d, fitcorr = True):
                       'sigma_vec': np.array(map(sigmatransform, marginal_param_vec[j+k:j+2*k]))}
         w_marginal_param_list[len(w_marginal_param_list):] = [param_dict]
     return (copula_corr_mat, w_marginal_param_list)
-
+'''
 def simulate_copula_posterior(copula_corr_mat, w_marginal_param_list, n=1):
     d = len(copula_corr_mat)
     gaussian_sample_mat = np.random.multivariate_normal(mean=np.zeros(d), cov = copula_corr_mat, size=n)

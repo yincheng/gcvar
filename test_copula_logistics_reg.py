@@ -11,7 +11,8 @@ import pickle
 
 dataset = 'simulated'
 n_train = 20
-n_true_sample = 10
+n_true_sample = 500000
+n_actual_true_sample = 100000
 sample_file_path = '../posterior_samples/'+'true_post_samples-'+dataset+'-n_train_'+str(n_train)+'-n_samples_'+str(n_true_sample)+'.pickle'
 
 
@@ -33,6 +34,8 @@ try:
 except:
     true_post_samples = sample_true_posterior(train_x, train_y, prior_sigma = 5.0, nsamples=n_true_sample)
 
+true_post_samples = true_post_samples[0]
+true_post_samples = true_post_samples[0:n_actual_true_sample, :]
 
 for k in (1, 5, 10):
     trained_params = two_step_fitting(n = n_train, k = k, nexperiment = 1, x_arg = train_x, y_arg = train_y)

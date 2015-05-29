@@ -248,7 +248,7 @@ def log_gaussian_prior_factor(w_marginal_param_list, prior_mu_vec, prior_sigma):
         w_expected_vec = np.append(w_expected_vec, w_expected)
         w_sq_expected_vec = np.append(w_sq_expected_vec, w_sq_expected)
     term_a = -0.5 * D * np.log(2.0 * np.pi * (prior_sigma**2))
-    term_b = -0.5 * ((1/prior_sigma) ** (2*D)) * (np.sum(w_sq_expected_vec) - 2.0 * np.dot(prior_mu_vec, w_expected_vec) + np.dot(prior_mu_vec, prior_mu_vec))
+    term_b = -0.5 * ((1/prior_sigma) ** 2) * (np.sum(w_sq_expected_vec) - 2.0 * np.dot(prior_mu_vec, w_expected_vec) + np.dot(prior_mu_vec, prior_mu_vec))
     return term_a + term_b
 
 def sum_of_factors(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_mu_vec, prior_sigma):

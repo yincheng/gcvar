@@ -20,10 +20,10 @@ for key_array in data['benchmarks'][0]:
         pickle.dump([x, y], f)
 
 with open('../data/simulated.pickle', 'wb') as f:
-    pickle.dump(confabulate_logit_data(d=20, N=520))
+    pickle.dump(confabulate_logit_data(d=20, N=520), f)
 '''
 with open('../data/simulated-d10.pickle', 'wb') as f:
-    pickle.dump(confabulate_logit_data(d=10, N=520))
+    pickle.dump(confabulate_logit_data(d=10, N=520), f)
 
 with open('../data/simulated-d5.pickle', 'wb') as f:
-    pickle.dump(confabulate_logit_data(d=5, N=520))
+    pickle.dump(confabulate_logit_data(d=5, N=520), f)

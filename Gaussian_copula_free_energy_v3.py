@@ -25,6 +25,9 @@ def get_a_coeff(corr):
     return (a_mat[0, 0], a_mat[0, 1])
 
 def compute_g(w_i_param_dict, w_j_param_dict, corr):
+    eps = 1.e-320
+    w_i_param_dict['sigma_vec'] = w_i_param_dict['sigma_vec'] + eps
+    w_j_param_dict['sigma_vec'] = w_j_param_dict['sigma_vec'] + eps
     (a11, a12) = get_a_coeff(corr)
     # i_term
     w_i_vec = w_i_param_dict['mu_vec']
@@ -34,8 +37,6 @@ def compute_g(w_i_param_dict, w_j_param_dict, corr):
     w_j_vec = w_j_param_dict['mu_vec']
     l = len(w_j_vec)
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
-    #norminvcdf = lambda q: mog_inv_cdf(q, np.array([1.]), np.array([0.]), np.array([1.]))
-    norminvcdf = norm.ppf
     w_i_term = np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
     #w_i_term = np.array(map(norminvcdf, w_i_term))
     w_i_term = norminvcdf(w_i_term)
@@ -51,6 +52,9 @@ def compute_g(w_i_param_dict, w_j_param_dict, corr):
 # This function returns a 2 x (MxL) array, with each column corresponding to gradient of g_ml(w_i, w_j)
 # To index a particular gradient vector, one can just use syntax output[i]
 def compute_g_gradients(w_i_param_dict, w_j_param_dict, corr):
+    eps = 1.e-320
+    w_i_param_dict['sigma_vec'] = w_i_param_dict['sigma_vec'] + eps
+    w_j_param_dict['sigma_vec'] = w_j_param_dict['sigma_vec'] + eps
     (a11, a12) = get_a_coeff(corr)
     # i_term
     w_i_vec = w_i_param_dict['mu_vec']
@@ -60,10 +64,8 @@ def compute_g_gradients(w_i_param_dict, w_j_param_dict, corr):
     w_j_vec = w_j_param_dict['mu_vec']
     l = len(w_j_vec)
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
-    a12 = corr / (corr**2 - 1.)
-    a11 = -1. * corr * a12
-    #norminvcdf = lambda q: mog_inv_cdf(q, np.array([1.]), np.array([0.]), np.array([1.]))
-    norminvcdf = norm.ppf
+    #a12 = corr / (corr**2 - 1.)
+    #a11 = -1. * corr * a12
     w_i_term = np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
     #w_i_term = np.array(map(norminvcdf, w_i_term))
     w_i_term = norminvcdf(w_i_term)
@@ -79,6 +81,9 @@ def compute_g_gradients(w_i_param_dict, w_j_param_dict, corr):
     return np.transpose(np.array([w_i_grad_factor, w_j_grad_factor]))
 
 def compute_g_hessians_new(w_i_param_dict, w_j_param_dict, corr):
+    eps = 1.e-320
+    w_i_param_dict['sigma_vec'] = w_i_param_dict['sigma_vec'] + eps
+    w_j_param_dict['sigma_vec'] = w_j_param_dict['sigma_vec'] + eps
     (c_1, c_2) = get_a_coeff(corr)
     
     w_i_vec = w_i_param_dict['mu_vec']
@@ -93,7 +98,6 @@ def compute_g_hessians_new(w_i_param_dict, w_j_param_dict, corr):
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
     sigma_j_vec = np.tile(sigma_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
     
-    norminvcdf = norm.ppf
     wi_mog_cdf_batch = lambda w_i: np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i))
     wj_mog_cdf_batch = lambda w_j: np.array(map(lambda w_j: mog_cdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j))
     h_i_vec = norminvcdf(wi_mog_cdf_batch(w_i_vec))
@@ -124,6 +128,9 @@ def compute_g_hessians_new(w_i_param_dict, w_j_param_dict, corr):
     return output    
 
 def compute_g_hessians(w_i_param_dict, w_j_param_dict, corr):
+    eps = 1.e-320
+    w_i_param_dict['sigma_vec'] = w_i_param_dict['sigma_vec'] + eps
+    w_j_param_dict['sigma_vec'] = w_j_param_dict['sigma_vec'] + eps
     (a11, a12) = get_a_coeff(corr)
     # i_term
     w_i_vec = w_i_param_dict['mu_vec']
@@ -134,8 +141,6 @@ def compute_g_hessians(w_i_param_dict, w_j_param_dict, corr):
     l = len(w_j_vec)
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
     
-    norminvcdf = norm.ppf
-    #norminvcdf = lambda q: mog_inv_cdf(q, np.array([1.]), np.array([0.]), np.array([1.]))
     w_i_term = np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
     #w_i_term = np.array(map(norminvcdf, w_i_term))
     w_i_term = norminvcdf(w_i_term)
@@ -179,7 +184,7 @@ def compute_w_second_moment_pair(w_i_param_dict, w_j_param_dict, corr):
     grad_g = compute_g_gradients(w_i_param_dict, w_j_param_dict, corr)
     hess_g = compute_g_hessians(w_i_param_dict, w_j_param_dict, corr)
     #hess_g = compute_g_hessians_new(w_i_param_dict, w_j_param_dict, corr)
-    #hess_g = np.array(map(lambda mat: mat - eps_mat, hess_g))
+    hess_g = np.array(map(lambda mat: mat - eps_mat, hess_g))
     inv_hess_g = np.linalg.inv(hess_g)
     inv_hess_g_det = np.linalg.det(inv_hess_g)
     approx_gaussian_mean_vec = -1. * np.array(map(lambda mat, vec: np.dot(mat, vec), inv_hess_g, grad_g))

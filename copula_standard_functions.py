@@ -13,6 +13,14 @@ from scipy.special import expit as sigmoid
 from scipy.stats import multivariate_normal
 from scipy.misc import logsumexp
 
+def norminvcdf(qin):
+    eps = 1.e-320
+    batch_ppf_fn = lambda q: norm.ppf(1.-1.e-16) if q==1. else norm.ppf(q+eps)
+    if(len(qin)==1):
+        return batch_ppf_fn(qin)
+    else:
+        return np.array(map(batch_ppf_fn, qin))
+
 def build_b_mat_rapisarda(a_mat):
     (row, col) = np.shape(a_mat)
     b_mat = np.zeros((row, col))

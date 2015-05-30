@@ -70,7 +70,10 @@ def unpack_param_array(params, d, fitcorr = True):
     w_marginal_param_list = list([])
     for i in np.arange(0, d):
         j = i * 3 * k
-        param_dict = {'k_vec': ktransform(marginal_param_vec[j:j+k]),
+        kvec = marginal_param_vec[j:j+k]
+        kvec = np.exp(kvec - np.max(kvec))
+        kvec = kvec / np.sum(kvec)
+        param_dict = {'k_vec': kvec,
                       'mu_vec': marginal_param_vec[j+k:j+2*k],
                       'sigma_vec': np.array(map(sigmatransform, marginal_param_vec[j+2*k:j+3*k]))}
         param_dict['k_vec'] = param_dict['k_vec'] / np.sum(param_dict['k_vec'])

@@ -260,6 +260,24 @@ def sum_of_factors(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_m
     return factor_sum + np.sum(taylor_factors_vec)
 
 def mog_entropy_lb(k_vec, mu_vec, sigma_vec):
+    eps = 1e-300
+    output = 0.0
+    for j in np.arange(0, len(k_vec)):
+        log_factor_vec = np.array([])
+        if(k_vec[j]==0.):
+            continue
+        for i in np.arange(0, len(k_vec)):
+            tmp = k_vec[i] * norm.pdf(mu_vec[i], loc = mu_vec[j], scale = np.sqrt(sigma_vec[i] ** 2 + sigma_vec[j]**2)+eps)
+            if(np.isnan(tmp)):
+                print 'tmp is nan!'
+                print str(k_vec[i]), str(mu_vec[i]), str(mu_vec[j]), str(sigma_vec[i]), str(sigma_vec[j])
+            log_factor_vec = np.append(log_factor_vec, tmp)
+        output += k_vec[j] *np.log(np.sum(log_factor_vec))
+        if(np.isnan(output)):
+            print 'Output is nan!'
+    return -1.0 * output
+'''
+def mog_entropy_lb(k_vec, mu_vec, sigma_vec):
     output = 0.0
     for j in np.arange(0, len(k_vec)):
         log_factor_vec = np.array([])
@@ -274,7 +292,7 @@ def mog_entropy_lb(k_vec, mu_vec, sigma_vec):
         if(np.isnan(output)):
             print 'Output is nan!'
     return -1.0 * output
-
+'''
 def mog_entropy_lb_sum(w_marginal_param_list):
     return np.sum(np.array(map(lambda param_dict: mog_entropy_lb(param_dict['k_vec'], param_dict['mu_vec'], param_dict['sigma_vec']), w_marginal_param_list)))
 

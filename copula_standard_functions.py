@@ -62,23 +62,53 @@ def std_normal_derivative(w_tilde):
     return -1.0 * w_tilde * norm.pdf(w_tilde)
 
 def log_mog_cdf(w, k_vec, mu_vec, sigma_vec):
-    exp_term = norm.logcdf(w, loc = mu_vec, scale = sigma_vec)
+    eps = 1.e-300
+    exp_term = norm.logcdf(w, loc = mu_vec, scale = sigma_vec+eps)
     coefficients = k_vec
     return logsumexp(exp_term, b = coefficients)
 
 def mog_cdf(w, k_vec, mu_vec, sigma_vec):
     return np.exp(log_mog_cdf(w, k_vec, mu_vec, sigma_vec))
 
+def log_mog_pdf_derivative(w, k_vec, mu_vec, sigma_vec):
+    coefficients = k_vec * (mu_vec-w)/(np.sqrt(2.*np.pi) * sigma_vec**3)
+    exp_term = -0.5 * ((w - mu_vec)/sigma_vec)**2
+    return logsumexp(exp_term, b = coefficients)
+
 def mog_pdf_derivative(w, k_vec, mu_vec, sigma_vec):
     return -1.0 * np.dot(k_vec * (w - mu_vec)/(sigma_vec**2), np.array(map(lambda mu, sigma: norm.pdf(w, mu, sigma), mu_vec, sigma_vec)))
+    #return np.exp(log_mog_pdf_derivative(w, k_vec, mu_vec, sigma_vec))
+
+def log_mog_derivative_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term):
+    coefficients = k_vec * (mu_vec-w)/(sigma_vec**3)
+    exp_term = -0.5 * ((w - mu_vec)/sigma_vec)**2 + 0.5 * w_term**2
+    output = logsumexp(exp_term, b = coefficients)
+    return output
+
+def mog_derivative_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term):
+    coefficients = k_vec * (mu_vec-w)/(sigma_vec**3)
+    exp_term = -0.5 * ((w - mu_vec)/sigma_vec)**2 + 0.5 * w_term**2
+    output = np.dot(coefficients, np.exp(exp_term))
+    return output
+    #return np.exp(log_mog_derivative_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term))
 
 def log_mog_pdf(w, k_vec, mu_vec, sigma_vec):
     coefficients = k_vec/(np.sqrt(2.*np.pi) * sigma_vec)
     exp_term = -0.5 * ((w - mu_vec)/sigma_vec)**2
-    return logsumexp(exp_term, b = coefficients)
+    output = logsumexp(exp_term, b = coefficients)
+    return output
 
 def mog_pdf(w, k_vec, mu_vec, sigma_vec):
     return np.exp(log_mog_pdf(w, k_vec, mu_vec, sigma_vec))
+
+def log_mog_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term):
+    coefficients = k_vec/sigma_vec
+    exp_term = -0.5 * ((w - mu_vec)/sigma_vec)**2 + 0.5 * w_term**2
+    output = logsumexp(exp_term, b = coefficients)
+    return output
+
+def mog_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term):
+    return np.exp(log_mog_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term))
 
 def mog_inv_cdf_find_bracket(q, k_vec, mu_vec, sigma_vec, startpoint = 0.0, inc = 1.):
     if(np.log(inc)>=50):

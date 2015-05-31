@@ -37,13 +37,12 @@ def compute_g(w_i_param_dict, w_j_param_dict, corr):
     w_j_vec = w_j_param_dict['mu_vec']
     l = len(w_j_vec)
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
+
     w_i_term = np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
-    #w_i_term = np.array(map(norminvcdf, w_i_term))
     w_i_term = norminvcdf(w_i_term)
+
     w_j_term = np.array(map(lambda w_j: mog_cdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j_vec))
-    #w_j_term = np.array(map(norminvcdf, w_j_term))
     w_j_term = norminvcdf(w_j_term)
-    #return -0.5 * (a11 * (w_i_term ** 2 + w_j_term ** 2) + 2. * a12 * w_i_term * w_j_term + z_i_vec + z_j_vec)
     output = -0.5 * (a11 * (w_i_term ** 2 + w_j_term ** 2) + 2. * a12 * w_i_term * w_j_term)
     if(np.isnan(np.sum(output))):
         print 'NaN in output!'
@@ -55,6 +54,7 @@ def compute_g_gradients(w_i_param_dict, w_j_param_dict, corr):
     eps = 1.e-320
     w_i_param_dict['sigma_vec'] = w_i_param_dict['sigma_vec'] + eps
     w_j_param_dict['sigma_vec'] = w_j_param_dict['sigma_vec'] + eps
+
     (a11, a12) = get_a_coeff(corr)
     # i_term
     w_i_vec = w_i_param_dict['mu_vec']
@@ -64,68 +64,16 @@ def compute_g_gradients(w_i_param_dict, w_j_param_dict, corr):
     w_j_vec = w_j_param_dict['mu_vec']
     l = len(w_j_vec)
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
-    #a12 = corr / (corr**2 - 1.)
-    #a11 = -1. * corr * a12
     w_i_term = np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
-    #w_i_term = np.array(map(norminvcdf, w_i_term))
     w_i_term = norminvcdf(w_i_term)
     w_j_term = np.array(map(lambda w_j: mog_cdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j_vec))
-    #w_j_term = np.array(map(norminvcdf, w_j_term))
     w_j_term = norminvcdf(w_j_term)
-    mog_pdf_w_i_vec = np.array(map(lambda w_i: mog_pdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
-    mog_pdf_w_j_vec = np.array(map(lambda w_j: mog_pdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j_vec))
-    w_i_grad_factor = -1. * (a11 * w_i_term + a12 * w_j_term) * mog_pdf_w_i_vec / norm.pdf(w_i_term) 
-    w_j_grad_factor = -1. * (a11 * w_j_term + a12 * w_i_term) * mog_pdf_w_j_vec / norm.pdf(w_j_term) 
-    #enum_i_grad = - w_i_grad_factor - z_i_vec
-    #enum_j_grad = - w_j_grad_factor - z_j_vec
+    
+    i_mog_gaussian_ratio = np.array(map(lambda w_i, w_term: mog_normal_pdf_ratio(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec'], w_term), w_i_vec, w_i_term))
+    j_mog_gaussian_ratio = np.array(map(lambda w_j, w_term: mog_normal_pdf_ratio(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec'], w_term), w_j_vec, w_j_term))
+    w_i_grad_factor = -1. * (a11 * w_i_term + a12 * w_j_term) * i_mog_gaussian_ratio 
+    w_j_grad_factor = -1. * (a11 * w_j_term + a12 * w_i_term) * j_mog_gaussian_ratio 
     return np.transpose(np.array([w_i_grad_factor, w_j_grad_factor]))
-
-def compute_g_hessians_new(w_i_param_dict, w_j_param_dict, corr):
-    eps = 1.e-320
-    w_i_param_dict['sigma_vec'] = w_i_param_dict['sigma_vec'] + eps
-    w_j_param_dict['sigma_vec'] = w_j_param_dict['sigma_vec'] + eps
-    (c_1, c_2) = get_a_coeff(corr)
-    
-    w_i_vec = w_i_param_dict['mu_vec']
-    sigma_i_vec = w_i_param_dict['sigma_vec']
-    m = len(w_i_vec)
-    w_i_vec = np.tile(w_i_vec, (m, 1)).reshape(1, m * m, order = 'C')[0]
-    sigma_i_vec = np.tile(sigma_i_vec, (m, 1)).reshape(1, m * m, order = 'C')[0]
-    # j_term
-    w_j_vec = w_j_param_dict['mu_vec']
-    sigma_j_vec = w_j_param_dict['sigma_vec']
-    l = len(w_j_vec)
-    w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
-    sigma_j_vec = np.tile(sigma_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
-    
-    wi_mog_cdf_batch = lambda w_i: np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i))
-    wj_mog_cdf_batch = lambda w_j: np.array(map(lambda w_j: mog_cdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j))
-    h_i_vec = norminvcdf(wi_mog_cdf_batch(w_i_vec))
-    h_j_vec = norminvcdf(wj_mog_cdf_batch(w_j_vec))
-    
-    wi_mog_pdf_batch = lambda w_i: np.array(map(lambda w_i: mog_pdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i))
-    wj_mog_pdf_batch = lambda w_j: np.array(map(lambda w_j: mog_pdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j))
-    h_i_prime_vec = wi_mog_pdf_batch(w_i_vec) / norm.pdf(h_i_vec)
-    h_j_prime_vec = wj_mog_pdf_batch(w_j_vec) / norm.pdf(h_j_vec)
-
-    wi_mog_pdf_prime_batch = lambda w_i: np.array(map(lambda w_i: mog_pdf_derivative(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i))
-    wj_mog_pdf_prime_batch = lambda w_j: np.array(map(lambda w_j: mog_pdf_derivative(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j))
-    wi_gaussian_pdf_vec = norm.pdf(h_i_vec)
-    wj_gaussian_pdf_vec = norm.pdf(h_j_vec)
-    wi_gaussian_prime_vec = -1. * h_i_vec * wi_gaussian_pdf_vec
-    wj_gaussian_prime_vec = -1. * h_j_vec * wj_gaussian_pdf_vec
-    h_i_prime2_vec = (wi_mog_pdf_prime_batch(w_i_vec) - wi_gaussian_prime_vec * h_i_prime_vec**2)/wi_gaussian_pdf_vec
-    h_j_prime2_vec = (wj_mog_pdf_prime_batch(w_j_vec) - wj_gaussian_prime_vec * h_j_prime_vec**2)/wj_gaussian_pdf_vec
-    
-    tmp_vec = np.dot(np.array([np.array([c_1, 0.]), np.array([0., c_2])]), np.array([h_i_prime_vec**2, h_j_prime_vec**2]))
-    tmp_vec += np.array([h_i_prime2_vec, h_j_prime2_vec]) * np.dot(np.array([np.array([c_1, c_2]), np.array([c_2, c_1])]), np.array([h_i_vec, h_j_vec]))
-    tmp_vec += np.array([1./sigma_i_vec**2, 1./sigma_j_vec**2])
-    tmp_vec = -1. * tmp_vec
-    
-    mix_term_vec = -1. * c_2 * h_i_prime_vec * h_j_prime_vec
-    build_hessian_mat_fn = lambda i_term, j_term, ij_term: np.array([[i_term, ij_term], [ij_term, j_term]])
-    output = np.array(map(build_hessian_mat_fn, tmp_vec[0,:], tmp_vec[1,:], mix_term_vec))
-    return output    
 
 def compute_g_hessians(w_i_param_dict, w_j_param_dict, corr):
     eps = 1.e-320
@@ -142,27 +90,22 @@ def compute_g_hessians(w_i_param_dict, w_j_param_dict, corr):
     w_j_vec = np.tile(w_j_vec, (l, 1)).reshape(1, l * l, order = 'F')[0]
     
     w_i_term = np.array(map(lambda w_i: mog_cdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
-    #w_i_term = np.array(map(norminvcdf, w_i_term))
     w_i_term = norminvcdf(w_i_term)
     w_j_term = np.array(map(lambda w_j: mog_cdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j_vec))
-    #w_j_term = np.array(map(norminvcdf, w_j_term))
     w_j_term = norminvcdf(w_j_term)
     
-    i_mog_pdf = np.array(map(lambda w_i: mog_pdf(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
-    j_mog_pdf = np.array(map(lambda w_j: mog_pdf(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j_vec))
-    i_gaussian_pdf = norm.pdf(w_i_term)
-    j_gaussian_pdf = norm.pdf(w_j_term)
+    i_mog_gaussian_ratio = np.array(map(lambda w_i, w_term: mog_normal_pdf_ratio(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec'], w_term), w_i_vec, w_i_term))
+    j_mog_gaussian_ratio = np.array(map(lambda w_j, w_term: mog_normal_pdf_ratio(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec'], w_term), w_j_vec, w_j_term))
+
+    i_mog_prime_gaussian_ratio = np.array(map(lambda w_i, w_term: mog_derivative_normal_pdf_ratio(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec'], w_term), w_i_vec, w_i_term))
+    j_mog_prime_gaussian_ratio = np.array(map(lambda w_j, w_term: mog_derivative_normal_pdf_ratio(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec'], w_term), w_j_vec, w_j_term))
     
-    i_mog_pdf_prime = np.array(map(lambda w_i: mog_pdf_derivative(w_i, w_i_param_dict['k_vec'], w_i_param_dict['mu_vec'], w_i_param_dict['sigma_vec']), w_i_vec))
-    j_mog_pdf_prime = np.array(map(lambda w_j: mog_pdf_derivative(w_j, w_j_param_dict['k_vec'], w_j_param_dict['mu_vec'], w_j_param_dict['sigma_vec']), w_j_vec))
-    
-    i_gaussian_pdf_prime = -1. * w_i_term * norm.pdf(w_i_term)
-    j_gaussian_pdf_prime = -1. * w_j_term * norm.pdf(w_j_term)
-    ij_hess = - a12 * (i_mog_pdf/i_gaussian_pdf) * (j_mog_pdf/j_gaussian_pdf)
-    i_hess_factor = a11 * (i_mog_pdf/i_gaussian_pdf) ** 2
-    i_hess_factor += (a11 * w_i_term + a12 * w_j_term) * ((i_mog_pdf_prime/i_gaussian_pdf) - ((i_mog_pdf_prime ** 2) * (i_gaussian_pdf_prime) / (i_gaussian_pdf ** 3) ))
-    j_hess_factor = a11 * (j_mog_pdf/j_gaussian_pdf) ** 2
-    j_hess_factor += (a11 * w_j_term + a12 * w_i_term) * ((j_mog_pdf_prime/j_gaussian_pdf) - ((j_mog_pdf_prime ** 2) * (j_gaussian_pdf_prime) / (j_gaussian_pdf ** 3) ))
+    ij_hess = - a12 * i_mog_gaussian_ratio * j_mog_gaussian_ratio
+    i_hess_factor = a11 * i_mog_gaussian_ratio ** 2
+    i_hess_factor += (a11 * w_i_term + a12 * w_j_term) * i_mog_prime_gaussian_ratio * (1. + w_i_term * i_mog_prime_gaussian_ratio)
+    j_hess_factor = a11 * j_mog_gaussian_ratio ** 2
+    j_hess_factor += (a11 * w_j_term + a12 * w_i_term) * j_mog_prime_gaussian_ratio * (1. + w_j_term * j_mog_prime_gaussian_ratio)
+
     # i_term
     inv_var_i_vec = (1./w_i_param_dict['sigma_vec']**2)
     m = len(inv_var_i_vec)
@@ -174,6 +117,12 @@ def compute_g_hessians(w_i_param_dict, w_j_param_dict, corr):
     enum_i_hess = - (inv_var_i_vec + i_hess_factor)
     enum_j_hess = - (inv_var_j_vec + j_hess_factor)
     enum_ij_hess = ij_hess
+    if np.any(np.isnan(enum_i_hess)):
+        print 'NaN in enum_i_hess'
+    if np.any(np.isnan(enum_j_hess)):
+        print 'NaN in enum_j_hess'
+    if np.any(np.isnan(enum_ij_hess)):
+        print 'NaN in enum_ij_hess'
     build_hessian_mat_fn = lambda i_term, j_term, ij_term: np.array([[i_term, ij_term], [ij_term, j_term]])
     output = np.array(map(build_hessian_mat_fn, enum_i_hess, enum_j_hess, enum_ij_hess))
     return output
@@ -185,7 +134,11 @@ def compute_w_second_moment_pair(w_i_param_dict, w_j_param_dict, corr):
     hess_g = compute_g_hessians(w_i_param_dict, w_j_param_dict, corr)
     #hess_g = compute_g_hessians_new(w_i_param_dict, w_j_param_dict, corr)
     hess_g = np.array(map(lambda mat: mat - eps_mat, hess_g))
-    inv_hess_g = np.linalg.inv(hess_g)
+    try:
+        inv_hess_g = np.linalg.inv(hess_g)
+    except:
+        print 'Error in hessian matrix!'
+        print str(hess_g)
     inv_hess_g_det = np.linalg.det(inv_hess_g)
     approx_gaussian_mean_vec = -1. * np.array(map(lambda mat, vec: np.dot(mat, vec), inv_hess_g, grad_g))
     dvd_factor_vec = -0.5 * np.array(map(lambda mat, vec: np.dot(vec, np.dot(mat, vec)), inv_hess_g, grad_g))
@@ -281,23 +234,7 @@ def mog_entropy_lb(k_vec, mu_vec, sigma_vec):
         if(np.isnan(output)):
             print 'Output is nan!'
     return -1.0 * output
-'''
-def mog_entropy_lb(k_vec, mu_vec, sigma_vec):
-    output = 0.0
-    for j in np.arange(0, len(k_vec)):
-        log_factor_vec = np.array([])
-#        if(k_vec[j]==0.):
-#            continue
-        for i in np.arange(0, len(k_vec)):
-            tmp = k_vec[i] * norm.pdf(mu_vec[i], loc = mu_vec[j], scale = np.sqrt(sigma_vec[i] ** 2 + sigma_vec[j]**2))
-            log_factor_vec = np.append(log_factor_vec, tmp)
-            if(np.isnan(tmp)):
-                print 'tmp is nan!'
-        output += k_vec[j] *np.log(np.sum(log_factor_vec))
-        if(np.isnan(output)):
-            print 'Output is nan!'
-    return -1.0 * output
-'''
+
 def mog_entropy_lb_sum(w_marginal_param_list):
     return np.sum(np.array(map(lambda param_dict: mog_entropy_lb(param_dict['k_vec'], param_dict['mu_vec'], param_dict['sigma_vec']), w_marginal_param_list)))
 

@@ -17,7 +17,14 @@ def obj_fn_min_bfgs_mog(params, y_vec, x_mat, prior_sigma = 5., fitcorr=True):
     copula_corr_mat = param_tmp_list[0]
     w_marginal_param_list = param_tmp_list[1]
     prior_mu_vec = np.zeros(d)
-    return -1.0 * obj_fn_maximise(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_mu_vec, prior_sigma)
+    try:
+        output =-1.0 * obj_fn_maximise(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_mu_vec, prior_sigma)
+    except RuntimeError:
+        print 'Runtime error in obj_fn_maximise!'
+        print 'params_arr:'
+        print params
+        raise RuntimeError('')
+    return output
 
 opt_itr = 0
 x = np.array([])

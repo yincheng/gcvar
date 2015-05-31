@@ -245,14 +245,10 @@ def obj_fn_maximise(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_
     term_b = mog_entropy_lb_sum(w_marginal_param_list)
     term_c = sum_of_factors(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_mu_vec, prior_sigma)
     output = term_a + term_b + term_c
-    '''
     if np.isnan(output):
-        print 'Error: obj. fn. returns nan!'
-        print 'w_marginal_param_list: '
-        print str(w_marginal_param_list)
-        print 'copula_corr_mat: '
         print str(copula_corr_mat)
-    '''
+        print str(w_marginal_param_list)
+        raise RuntimeError('Objective function returned NaN!')
     return output
 
 def create_gaussian_copula_plot(w_marginal_param_list, copula_corr_mat = 0, copula_upper_cholesky_mat = 0, x_lo = -20.0, x_hi = 20.0, y_lo = -20.0, y_hi = 20.0, filename = '', grid_size = 0.5):

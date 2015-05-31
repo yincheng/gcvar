@@ -88,6 +88,9 @@ def log_mog_derivative_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term):
 def mog_derivative_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term):
     coefficients = k_vec * (mu_vec-w)/(sigma_vec**3)
     exp_term = -0.5 * ((w - mu_vec)/sigma_vec)**2 + 0.5 * w_term**2
+    bool_vec = coefficients != 0.
+    coefficients = coefficients[bool_vec]
+    exp_term = exp_term[bool_vec]
     output = np.dot(coefficients, np.exp(exp_term))
     return output
     #return np.exp(log_mog_derivative_normal_pdf_ratio(w, k_vec, mu_vec, sigma_vec, w_term))

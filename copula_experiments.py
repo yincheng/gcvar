@@ -53,7 +53,7 @@ def callback_opt(params):
             csvfile.write(csv_str)
         csv_str = ''
       
-def run_experiment(n = 5, d = 2, k = 2, nexperiment = 1, param0_array = 0, csv = '', debug = False, fitcorr = True, x_arg = None, y_arg = None):
+def run_experiment(n = 5, d = 2, k = 2, nexperiment = 1, param0_array = 0, csv = '', debug = False, fitcorr = True, x_arg = None, y_arg = None, randomseed = 0):
     global opt_itr
     global x
     global y
@@ -89,7 +89,7 @@ def run_experiment(n = 5, d = 2, k = 2, nexperiment = 1, param0_array = 0, csv =
     outputstr = ''
     initial_param_type = type(param0_array)
     for exp_itr in np.arange(0, nexperiment, 1):
-        np.random.seed(exp_itr)
+        np.random.seed(exp_itr + randomseed)
         if(initial_param_type == int):
             param0_array = np.array([])
             if(fitcorr):

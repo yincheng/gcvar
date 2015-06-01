@@ -181,14 +181,13 @@ def compute_w_second_moment(w_marginal_param_list, copula_corr_mat):
         output_mat[i, i] = np.dot(w_marginal_param_list[i]['k_vec'], w_marginal_param_list[i]['sigma_vec'] ** 2 + w_marginal_param_list[i]['mu_vec'] ** 2)
     return output_mat
 
-def taylor_series_loglikelihood_factor(y, x_vec, w_marginal_param_list, copula_corr_mat):
+def taylor_series_loglikelihood_factor(y, x_vec, w_marginal_param_list, copula_corr_mat, second_moment_mat):
     w_mean_vec = np.array(map(lambda param_dict: np.dot(param_dict['k_vec'], param_dict['mu_vec']), w_marginal_param_list))
     logsigmoid = log_sigmoid(w_mean_vec, y, x_vec, derivatives=True)
     const_term = logsigmoid['eval']
     grad = logsigmoid['gradient']
     hess = logsigmoid['hessian']
-    second_moment = compute_w_second_moment(w_marginal_param_list, copula_corr_mat)
-    output = const_term + 0.5 * np.trace(np.dot(hess, second_moment)) - 0.5 * np.dot(np.dot(w_mean_vec, hess), w_mean_vec)
+    output = const_term + 0.5 * np.trace(np.dot(hess, second_moment_mat)) - 0.5 * np.dot(np.dot(w_mean_vec, hess), w_mean_vec)
 #    if(np.isnan(output)):
 #        print 'NaN in output!'
     return output
@@ -210,8 +209,9 @@ def log_gaussian_prior_factor(w_marginal_param_list, prior_mu_vec, prior_sigma):
     return term_a + term_b
 
 def sum_of_factors(y_vec, x_mat, w_marginal_param_list, copula_corr_mat, prior_mu_vec, prior_sigma):
+    second_moment_mat = compute_w_second_moment(w_marginal_param_list, copula_corr_mat)
     factor_sum = log_gaussian_prior_factor(w_marginal_param_list, prior_mu_vec, prior_sigma)
-    batch_taylor = lambda y, x: taylor_series_loglikelihood_factor(y, x, w_marginal_param_list, copula_corr_mat)
+    batch_taylor = lambda y, x: taylor_series_loglikelihood_factor(y, x, w_marginal_param_list, copula_corr_mat, second_moment_mat)
     taylor_factors_vec = np.array(map(batch_taylor, y_vec, x_mat))
 #    if(np.isnan(np.sum(taylor_factors_vec))):
 #        print 'Nan in sum of factors!'
